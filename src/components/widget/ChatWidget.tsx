@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
+import { v4 as uuidv4 } from 'uuid';
 import { 
   MessageSquare, 
   X, 
@@ -67,7 +69,7 @@ export default function ChatWidget({ siteId = 'demo-site' }: { siteId?: string }
   useEffect(() => {
     let vid = localStorage.getItem('ef_visitor_id');
     if (!vid) {
-      vid = Math.random().toString(36).substring(7);
+      vid = uuidv4();
       localStorage.setItem('ef_visitor_id', vid);
     }
     setVisitorId(vid);
@@ -88,7 +90,7 @@ export default function ChatWidget({ siteId = 'demo-site' }: { siteId?: string }
   }, [messages, isTyping]);
 
   const addMessage = (role: Role, content: string, extra?: Partial<Message>) => {
-    const newMessage: Message = { id: Math.random().toString(), role, content, ...extra };
+    const newMessage: Message = { id: uuidv4(), role, content, ...extra };
     setMessages(prev => [...prev, newMessage]);
   };
 
@@ -312,8 +314,4 @@ export default function ChatWidget({ siteId = 'demo-site' }: { siteId?: string }
       </AnimatePresence>
     </div>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
 }

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { cn } from '@/lib/utils';
 import { 
   MessageSquare, 
   Search, 
@@ -136,8 +137,4 @@ export default function ConversationsPage() {
       </div>
     </DashboardLayout>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
 }

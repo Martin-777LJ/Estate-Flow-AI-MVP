@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { cn } from '@/lib/utils';
 import { 
   Search, 
   Filter, 
@@ -201,8 +202,4 @@ export default function LeadsPage() {
       </div>
     </DashboardLayout>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
 }

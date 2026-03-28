@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { cn } from '@/lib/utils';
 import { 
   Save, 
   MessageSquare, 
@@ -130,8 +131,4 @@ export default function SettingsPage() {
       </div>
     </DashboardLayout>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
 }

@@ -20,10 +20,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
-}
+import { cn } from '@/lib/utils';
 
 const navItems = [
   { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
