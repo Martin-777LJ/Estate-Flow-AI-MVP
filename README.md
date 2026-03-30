@@ -2,43 +2,58 @@
 
 EstateFlow AI is a premium SaaS-lite solution designed to help real estate agencies capture more leads through an AI-powered website chat assistant.
 
-## Features
-- **High-Conversion Landing Page:** Modern marketing site designed to sell the value proposition.
-- **Embedded Chat Widget:** A polished, floating chatbot that uses the **Gemini 1.5 Flash** model for FAQ handling and conversational lead capture.
-- **Admin Dashboard:** Comprehensive control panel for managing leads, conversations, and training the bot's Knowledge Base.
-- **AI Intelligence:** State-aware lead capture flow (Name, Phone, Property Preferences) that naturally qualifies prospects.
-- **Persistence:** Full conversation and lead data stored in **Supabase**.
+## 🚀 Getting Started
 
-## Tech Stack
-- **Framework:** Next.js 15 (App Router, TypeScript)
-- **UI/UX:** Tailwind CSS + Framer Motion + Lucide Icons
-- **Backend:** Next.js Route Handlers
-- **Database/Auth:** Supabase (PostgreSQL)
-- **AI Engine:** Google Gemini Pro / Flash API
+### 1. Environment Setup
+Create a `.env.local` file in the root directory and add the following variables:
 
-## Quick Start
-1. **Clone & Install:**
-   ```bash
-   npm install
-   ```
-2. **Environment Setup:**
-   Copy `.env.example` to `.env.local` and fill in your Supabase and Gemini API keys.
-3. **Database Setup:**
-   Run the SQL migration in `supabase/migrations/` on your Supabase project.
-4. **Run Development:**
-   ```bash
-   npm run dev
-   ```
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-## Installation (Client Site)
-To install the widget on a client's website, paste the snippet from the **Install** page in the dashboard:
-```html
-<script 
-  src="https://app.estateflow.ai/widget.js" 
-  data-site-id="YOUR_SITE_ID" 
-  async 
-></script>
+# Google Gemini AI
+GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_api_key
 ```
+
+### 2. Database Schema
+Run the SQL content from `supabase/migrations/20260328000000_initial_schema.sql` in your Supabase SQL Editor. This will:
+- Create the necessary tables (`sites`, `knowledge_base`, `leads`, `conversations`).
+- Set up Row Level Security (RLS) policies.
+- Seed the database with the **PrimeNest Realty** demo business data.
+
+### 3. Install Dependencies
+```bash
+npm install
+```
+
+### 4. Run the Project
+```bash
+npm run dev
+```
+
+## 🛠 Features
+
+- **24/7 AI Assistant:** Powered by Google Gemini 1.5 Flash.
+- **Conversational Lead Capture:** Automatically identifies user intent and collects contact details.
+- **Knowledge Base Integration:** AI answers questions based on business-specific FAQs.
+- **Admin Dashboard:** Manage captured leads and view live conversation transcripts.
+- **Responsive Design:** Polished UI built with Tailwind CSS and Framer Motion.
+
+## 📁 Key Files
+
+- **AI Logic:** `src/app/api/chat/route.ts`
+- **Chat Widget:** `src/components/widget/ChatWidget.tsx`
+- **Dashboard Layout:** `src/components/dashboard/DashboardLayout.tsx`
+- **Demo Config:** `src/lib/config.ts`
+
+## 🧪 Testing the Demo
+1. Go to the landing page (`/`).
+2. Click the chat icon in the bottom right.
+3. Chat with **PrimeNest Assistant**.
+4. Show interest in buying or renting to trigger the lead capture flow.
+5. Log in to the dashboard (`/dashboard`) to see your captured lead and the transcript.
 
 ---
 Built with **EstateFlow AI** — Premium Property Lead Capture.

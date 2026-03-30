@@ -1,0 +1,11 @@
+- [x] Define the audit scope.
+- [x] SAST Recon on src/app/dashboard/conversations/page.tsx
+  - [ ] Investigate data flow from supabase 'conversations' table on line 36 (Access Control)
+- [ ] SAST Recon on src/app/dashboard/knowledge/page.tsx
+- [ ] SAST Recon on src/app/dashboard/leads/page.tsx
+- [ ] SAST Recon on src/app/dashboard/page.tsx
+- [ ] SAST Recon on src/app/dashboard/settings/page.tsx
+- [ ] SAST Recon on src/app/login/page.tsx
+- [ ] SAST Recon on src/app/page.tsx
+- [ ] SAST Recon on src/components/dashboard/DashboardLayout.tsx
+- [ ] Conduct the final review of all findings as per your **Minimizing False Positives** operating principle and generate the final report.

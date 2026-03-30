@@ -1,205 +1,154 @@
-'use client';
-
-import React, { useState } from 'react';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { cn } from '@/lib/utils';
+import { createServerClient } from '@/lib/supabaseServer';
+import { format } from 'date-fns';
 import { 
-  Search, 
-  Filter, 
-  Download, 
-  MoreHorizontal, 
-  Mail, 
+  User, 
   Phone, 
+  Mail, 
   MapPin, 
   DollarSign, 
-  Home,
-  ChevronLeft,
+  Calendar,
+  Filter,
+  Search,
   ChevronRight,
-  User,
-  Plus,
-  Eye
+  Badge
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
-const leadsData = [
-  { id: 1, name: 'Alice Johnson', email: 'alice@example.com', phone: '+1 234 567 8901', type: 'Buyer', location: 'Downtown', budget: '$500k - $700k', property: 'Condo', status: 'New', date: 'Oct 24, 2026' },
-  { id: 2, name: 'Bob Smith', email: 'bob@example.com', phone: '+1 234 567 8902', type: 'Renter', location: 'Suburbs', budget: '$2k - $3k/mo', property: 'Apartment', status: 'Qualified', date: 'Oct 23, 2026' },
-  { id: 3, name: 'Charlie Brown', email: 'charlie@example.com', phone: '+1 234 567 8903', type: 'Buyer', location: 'Beachfront', budget: '$1.2M+', property: 'Villa', status: 'Contacted', date: 'Oct 22, 2026' },
-  { id: 4, name: 'Diana Prince', email: 'diana@example.com', phone: '+1 234 567 8904', type: 'Buyer', location: 'Uptown', budget: '$800k - $1M', property: 'Townhouse', status: 'Closed', date: 'Oct 20, 2026' },
-  { id: 5, name: 'Edward Norton', email: 'edward@example.com', phone: '+1 234 567 8905', type: 'Renter', location: 'Downtown', budget: '$4k+/mo', property: 'Penthouse', status: 'Lost', date: 'Oct 18, 2026' },
-];
+export const dynamic = 'force-dynamic';
 
-export default function LeadsPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+export default async function LeadsPage() {
+  const supabase = createServerClient();
+  
+  const { data: leads, error } = await supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-  const filteredLeads = leadsData.filter(lead => 
-    (statusFilter === 'All' || lead.status === statusFilter) &&
-    (lead.name.toLowerCase().includes(searchTerm.toLowerCase()) || lead.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  if (error) {
+    return (
+      <div className="p-8 text-red-500">
+        Error loading leads: {error.message}
+      </div>
+    );
+  }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-8 max-w-[1400px] mx-auto pb-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-          <div>
-            <h1 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">Leads</h1>
-            <p className="text-slate-500 text-sm mt-2 font-medium">Manage and qualify your property inquiries from one place.</p>
-          </div>
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <button className="flex-1 md:flex-none px-6 py-4 bg-white border border-slate-200 rounded-2xl text-xs font-black text-slate-600 uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-2 shadow-sm">
-              <Download size={16} />
-              Export
-            </button>
-            <button className="flex-1 md:flex-none px-6 py-4 bg-blue-600 rounded-2xl text-xs font-black text-white uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-100 active:scale-95">
-              <Plus size={16} strokeWidth={3} />
-              Add Lead
-            </button>
-          </div>
+    <div className="p-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Leads</h1>
+          <p className="text-slate-500 font-medium">Manage and follow up with your captured prospects.</p>
         </div>
-
-        {/* Search & Filters */}
-        <div className="bg-white p-4 rounded-[32px] border border-slate-200/60 shadow-sm flex flex-col lg:flex-row gap-4 items-center">
-          <div className="w-full lg:flex-1 relative group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+        
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
               type="text" 
-              placeholder="Search leads by name, email, or requirements..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-600/10 rounded-2xl py-4 pl-14 pr-6 text-[13px] font-bold outline-none transition-all placeholder:text-slate-400"
+              placeholder="Search leads..."
+              className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
             />
           </div>
-          <div className="w-full lg:w-auto flex gap-3">
-            <div className="relative flex-1 lg:w-48">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <select 
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 pl-11 pr-10 text-[13px] font-bold text-slate-600 outline-none appearance-none cursor-pointer hover:bg-slate-100/50 transition-all"
-              >
-                <option>All Status</option>
-                <option>New</option>
-                <option>Contacted</option>
-                <option>Qualified</option>
-                <option>Closed</option>
-                <option>Lost</option>
-              </select>
-            </div>
-          </div>
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+            <Filter size={18} />
+            Filter
+          </button>
         </div>
+      </div>
 
-        {/* Modern Table Layout */}
-        <div className="bg-white rounded-[40px] border border-slate-200/60 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.03)] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50">
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Contact</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Interest & Budget</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Date</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredLeads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-slate-50/50 transition-all group cursor-pointer">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-[18px] bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 flex items-center justify-center font-black text-sm border border-blue-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                          {lead.name[0]}
+      <div className="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Lead</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Interest</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Property & Location</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Budget</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Captured</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {leads && leads.length > 0 ? (
+                leads.map((lead) => (
+                  <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 font-bold">
+                          {lead.full_name?.charAt(0) || <User size={18} />}
                         </div>
                         <div>
-                          <p className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors">{lead.name}</p>
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1">
-                            <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold tracking-tight">
-                              <Mail size={12} className="text-slate-300" /> {lead.email}
-                            </span>
-                            <span className="hidden sm:block text-slate-200">•</span>
-                            <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold tracking-tight">
-                              <Phone size={12} className="text-slate-300" /> {lead.phone}
-                            </span>
+                          <div className="font-bold text-slate-900">{lead.full_name || 'Anonymous'}</div>
+                          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                            {lead.email && <span>{lead.email}</span>}
+                            {lead.phone && <span>{lead.phone}</span>}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2 text-[11px] text-slate-900 font-black uppercase tracking-tight">
-                          <Home size={13} className="text-blue-600" strokeWidth={2.5} /> {lead.property} — {lead.type}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className="flex items-center gap-1.5 text-[11px] text-slate-500 font-bold">
-                            <MapPin size={12} className="text-slate-400" /> {lead.location}
-                          </span>
-                          <span className="flex items-center gap-1.5 text-[11px] font-black text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded-lg border border-blue-100/50">
-                            <DollarSign size={12} /> {lead.budget}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
+                    <td className="px-6 py-4">
                       <span className={cn(
-                        "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-2 shadow-sm",
-                        lead.status === 'New' ? "bg-amber-50 text-amber-600 border border-amber-100" :
-                        lead.status === 'Qualified' ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
-                        lead.status === 'Contacted' ? "bg-blue-50 text-blue-600 border border-blue-100" :
-                        lead.status === 'Closed' ? "bg-slate-900 text-white shadow-xl shadow-slate-200" :
-                        "bg-red-50 text-red-600 border border-red-100"
+                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                        lead.interest_type === 'buy' ? "bg-emerald-50 text-emerald-600" :
+                        lead.interest_type === 'rent' ? "bg-blue-50 text-blue-600" :
+                        lead.interest_type === 'invest' ? "bg-purple-50 text-purple-600" :
+                        "bg-slate-100 text-slate-600"
                       )}>
-                        <span className={cn(
-                          "w-1.5 h-1.5 rounded-full animate-pulse",
-                          lead.status === 'New' ? "bg-amber-400" :
-                          lead.status === 'Qualified' ? "bg-emerald-400" :
-                          lead.status === 'Contacted' ? "bg-blue-400" :
-                          lead.status === 'Closed' ? "bg-white" :
-                          "bg-red-400"
-                        )} />
-                        {lead.status}
+                        {lead.interest_type || 'Unknown'}
                       </span>
                     </td>
-                    <td className="px-8 py-6 text-[11px] text-slate-500 font-black tracking-widest uppercase">{lead.date}</td>
-                    <td className="px-8 py-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button className="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-white hover:text-blue-600 hover:shadow-md border border-transparent hover:border-slate-100 rounded-xl transition-all active:scale-90">
-                          <Eye size={18} />
-                        </button>
-                        <button className="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-white hover:text-slate-900 hover:shadow-md border border-transparent hover:border-slate-100 rounded-xl transition-all active:scale-90">
-                          <MoreHorizontal size={18} />
-                        </button>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-bold text-slate-700">{lead.property_type || 'N/A'}</div>
+                      <div className="flex items-center gap-1 text-xs text-slate-400 font-medium mt-0.5">
+                        <MapPin size={12} />
+                        {lead.location || 'N/A'}
                       </div>
                     </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1 text-sm font-bold text-slate-900">
+                        <DollarSign size={14} className="text-slate-400" />
+                        {lead.budget || 'Not set'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "w-2 h-2 rounded-full",
+                          lead.status === 'qualified' ? "bg-emerald-500" :
+                          lead.status === 'contacted' ? "bg-amber-500" :
+                          lead.status === 'new' ? "bg-blue-500" :
+                          lead.status === 'closed' ? "bg-slate-900" :
+                          "bg-red-500" // lost
+                        )} />
+                        <span className="text-xs font-bold text-slate-700 capitalize">{lead.status}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-xs font-medium text-slate-400">
+                      {format(new Date(lead.created_at), 'MMM d, h:mm a')}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-400 hover:text-blue-600">
+                        <ChevronRight size={20} />
+                      </button>
+                    </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Pagination */}
-          <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em]">Showing {filteredLeads.length} of {leadsData.length} records</p>
-            <div className="flex items-center gap-3">
-              <button className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 transition-all disabled:opacity-30" disabled>
-                Previous
-              </button>
-              <div className="flex gap-1.5">
-                {[1, 2, 3].map(p => (
-                  <button key={p} className={cn(
-                    "w-8 h-8 rounded-lg text-[10px] font-black transition-all",
-                    p === 1 ? "bg-blue-600 text-white shadow-lg shadow-blue-100" : "bg-white border border-slate-200 text-slate-400 hover:bg-slate-50"
-                  )}>
-                    {p}
-                  </button>
-                ))}
-              </div>
-              <button className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-slate-600 uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all">
-                Next
-              </button>
-            </div>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400 font-medium">
+                    No leads captured yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
+}
+
+function cn(...inputs: any[]) {
+  return inputs.filter(Boolean).join(' ');
 }
