@@ -13,9 +13,13 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-# Google Gemini AI
+# Google Gemini AI (Project uses GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY)
+GEMINI_API_KEY=your_gemini_api_key
 GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_api_key
 ```
+
+**Note:** For Vercel deployment, ensure these variables are added to the Project Settings > Environment Variables. The build will fail if `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are not provided, as they are required for Supabase client initialization.
+
 
 ### 2. Database Schema
 Run the SQL content from `supabase/migrations/20260328000000_initial_schema.sql` in your Supabase SQL Editor. This will:

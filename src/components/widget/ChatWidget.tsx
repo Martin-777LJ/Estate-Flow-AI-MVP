@@ -50,13 +50,14 @@ interface LeadData {
 
 const QUICK_REPLIES = [
   'Browse Properties',
+  'Rent a Home',
+  'Buy Property',
   'Book a Viewing',
-  'Rental Inquiry',
-  'Buy a Property'
+  'Speak to an Agent'
 ];
 
 const INITIAL_MESSAGES: Message[] = [
-  { id: '1', role: 'bot', content: "Hi there! 👋 I'm your AI Estate Assistant. I can help you find your dream property or answer questions about our listings. How can I help you today?" },
+  { id: '1', role: 'bot', content: "Hi 👋 I’m your PrimeNest Realty Assistant. I can help you find properties, answer questions, or book a viewing." },
   { id: '2', role: 'bot', content: "Select an option below or type your question.", type: 'quick-replies', options: QUICK_REPLIES }
 ];
 
@@ -69,6 +70,7 @@ export default function ChatWidget({ siteId = SITE_CONFIG.demoSiteId }: { siteId
     window.addEventListener('open-estateflow-chat', handleOpenEvent);
     return () => window.removeEventListener('open-estateflow-chat', handleOpenEvent);
   }, []);
+
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -162,11 +164,17 @@ export default function ChatWidget({ siteId = SITE_CONFIG.demoSiteId }: { siteId
         }),
       });
 
+      if (!response.ok) throw new Error("API failed");
+
       const data = await response.json();
       
       setIsTyping(false);
+      
       if (data.reply) {
-        addMessage('bot', data.reply);
+        addMessage('bot', data.reply, {
+          type: data.nextLeadStep && data.options ? 'quick-replies' : 'text',
+          options: data.options
+        });
       } else {
         throw new Error("Empty reply");
       }
@@ -181,7 +189,11 @@ export default function ChatWidget({ siteId = SITE_CONFIG.demoSiteId }: { siteId
     } catch (error) {
       console.error('Chat error:', error);
       setIsTyping(false);
-      addMessage('bot', "I'm having a bit of trouble connecting, but please feel free to leave your name and number and our team will get back to you!");
+      // Fallback guided response
+      addMessage('bot', "I can still help with common property requests. What would you like to do next?", {
+        type: 'quick-replies',
+        options: QUICK_REPLIES
+      });
     }
   };
 

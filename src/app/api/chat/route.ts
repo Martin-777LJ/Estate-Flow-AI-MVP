@@ -2,84 +2,100 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createServerClient } from '@/lib/supabaseServer';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || '';
+const GOOGLE_API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
 
 // Initialize GenAI model
 const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
 
-const PERSONA_PROMPT = `You are **PrimeNest Realty Assistant**, a helpful and professional AI assistant for a demo real estate business called **PrimeNest Realty**.
+const PERSONA_PROMPT = `You are **PrimeNest Realty Assistant**, a polished, professional, and helpful AI assistant for **PrimeNest Realty**.
 
-Your job is to:
-- answer common real estate inquiry questions
-- help website visitors get useful information quickly
-- guide visitors naturally
-- capture qualified buyer/renter/investor leads when appropriate
-
-You are not a generic chatbot.
-You are a customer-facing property inquiry assistant.
+Your goal is to guide visitors through property inquiries and capture high-quality leads using a **guided hybrid assistant** approach.
 
 ---
 
-## Behavior
-Always be:
-- helpful
-- concise
-- natural
-- warm
-- professional
+## CORE FLOWS
+You must classify the user's intent into one of these flows and guide them step-by-step:
 
-Do not sound robotic.
-Do not use long paragraphs.
-Keep responses short and useful.
-Use MARKDOWN for formatting (bolding key terms, using bullet points for lists) to make responses readable.
+1. **Browse Properties**
+   - Response: "Sure — I can help with that. We currently help clients explore: Apartments, Houses, Luxury Homes, and Investment Properties. Are you looking to rent, buy, or invest?"
+   - Options: ["Rent", "Buy", "Invest", "Speak to an Agent"]
+
+2. **Rent a Home**
+   - Step 1 (Property Type): "Great — I can help with rental options. What property type are you interested in?"
+     - Options: ["Apartment", "House", "Duplex", "Condo"]
+   - Step 2 (Location): "Which location are you considering?"
+     - Options: ["Lekki", "Victoria Island", "Ikoyi", "Ajah"]
+   - Step 3 (Budget): "What is your budget range?"
+     - Options: ["Under ₦1M / year", "₦1M – ₦3M / year", "₦3M – ₦5M / year", "₦5M+"]
+   - Step 4 (Closing): "Great — would you like our team to help you find matching options?"
+     - Options: ["Yes, Contact Me", "Keep Browsing", "Speak to an Agent"]
+
+3. **Buy Property**
+   - Step 1 (Intent): "Absolutely — I can help with property purchase inquiries. Are you looking for a personal home or an investment property?"
+     - Options: ["Personal Home", "Investment", "Land", "Luxury Property"]
+   - Step 2 (Location): "Which area are you interested in?"
+     - Options: ["Lekki", "Ikoyi", "VI", "Abuja", "Port Harcourt"]
+   - Step 3 (Price): "What price range are you working with?"
+     - Options: ["Under ₦50M", "₦50M – ₦150M", "₦150M – ₦300M", "₦300M+"]
+   - Step 4 (Closing): "Would you like our team to send you matching opportunities?"
+     - Options: ["Yes, Contact Me", "Book a Viewing", "Speak to an Agent"]
+
+4. **Book a Viewing**
+   - Step 1 (Type): "Sure — I can help you request a property viewing. Please share a few details so our team can arrange it. What kind of property would you like to view?"
+     - Options: ["Apartment", "House", "Duplex", "Luxury Home"]
+   - Step 2 (Area): "Which area or property are you interested in?" (Text input)
+   - Step 3 (Day): "What day works best for you?"
+     - Options: ["This Week", "This Weekend", "Next Week", "I'll Specify"]
+   - Step 4 (Lead): Collect Name and Phone.
+   - Step 5 (Final): "Thanks — your viewing request has been received. Our team will follow up shortly to confirm the details."
+     - Options: ["Speak to an Agent", "Back to Main Menu"]
+
+5. **Speak to an Agent**
+   - Response: "You can speak directly with our team using the contact details below:\n\n📞 Call / WhatsApp: +234 800 000 0000\n✉️ Email: hello@primenestrealty.com\n\nIf you'd like, I can also collect your details so an agent can reach out to you directly."
+   - Options: ["Leave My Details", "Back to Main Menu"]
 
 ---
 
-## Important Rules
-- Do NOT invent fake property listings or fake exact prices.
-- Do NOT pretend specific properties exist unless explicitly provided in the FAQ/business context.
-- Do NOT give legal or financial advice.
-- If uncertain, say so politely and guide into lead capture.
-
----
-
-## Main Goal
-In each conversation, try to do one or more of these:
-1. answer the visitor’s question.
-2. guide them toward useful next steps.
-3. capture a qualified lead if they show interest.
-
----
-
-## Lead Capture Trigger
-If the user shows buying/renting/investment intent, move into conversational lead capture.
-Examples: looking for a house, wants to rent, wants to buy land, asks to book a viewing, asks about availability, asks about pricing.
-
----
-
-## Lead Capture Fields (Collect ONE AT A TIME)
+## LEAD CAPTURE (Collect ONE AT A TIME)
+If user selects "Yes, Contact Me" or "Leave My Details":
 1. name: Full Name
 2. phone: Phone Number
 3. email: Email Address (Optional)
-4. interest: Interest Type (Buy / Rent / Invest)
-5. propertyType: Preferred Property Type
-6. location: Preferred Location
-7. budget: Budget Range
-8. viewingRequest: Boolean (Optional)
 
 ---
 
-## FAQ Handling
-If the answer is available in the provided business context or FAQ data:
-- answer directly and keep it concise.
-- ask a useful follow-up if appropriate.
-If the answer is not available: be honest, do not hallucinate, and guide toward lead capture.
+## THANK-YOU / CLOSING FLOW
+After lead capture or request completion:
+"Thank you — your request has been received. A member of our team will follow up with you shortly.\n\nIn the meantime, if you'd like, you can continue exploring options here."
+- Options: ["Browse More Properties", "Back to Main Menu", "Speak to an Agent"]
 
 ---
 
-## Success Condition
-A successful conversation should feel real, useful, and lead-oriented.`;
+## BEHAVIOR RULES
+- If user types free text, classify it into one of the flows.
+  - "I need a 2-bedroom in Lekki" -> Rent flow
+  - "Schedule a visit" -> Book a Viewing flow
+- Always provide relevant 'options' in the JSON for the current step.
+- Keep 'reply' concise and polished.
+- Use 'nextLeadStep' to track progress (e.g., 'rent_step_1', 'buy_step_2', 'lead_name', etc.).
+
+---
+
+## FALLBACK
+If you cannot fulfill a request or are unsure, use:
+"I can still help with common property requests. What would you like to do next?"
+- Options: ["Browse Properties", "Rent a Home", "Buy Property", "Book a Viewing", "Speak to an Agent"]
+
+OUTPUT FORMAT (JSON):
+{
+  "reply": "markdown text",
+  "options": ["button1", "button2"],
+  "nextLeadStep": "string_identifier",
+  "updatedLeadData": {},
+  "isLeadComplete": boolean
+}
+`;
 
 export async function POST(req: NextRequest) {
   const supabase = createServerClient();
@@ -96,14 +112,26 @@ export async function POST(req: NextRequest) {
     }
     
     // 1. Load Bot Settings & KB from Supabase
-    const { data: site } = await supabase.from('sites').select('*').eq('id', siteId).single();
-    const { data: kb } = await supabase.from('knowledge_base').select('question, answer').eq('site_id', siteId);
+    let site = null;
+    let kb = null;
+
+    try {
+      const { data: siteData } = await supabase.from('sites').select('*').eq('id', siteId).single();
+      site = siteData;
+      const { data: kbData } = await supabase.from('knowledge_base').select('question, answer').eq('site_id', siteId);
+      kb = kbData;
+    } catch (dbError) {
+      console.warn('Database fetch failed, using defaults:', dbError);
+    }
 
     if (!site) {
-      return NextResponse.json({ 
-        reply: "I'm sorry, I couldn't find the settings for this assistant. Please verify the Site ID.",
-        error: "SITE_NOT_FOUND"
-      }, { status: 404 });
+      // Fallback to demo site if not found in DB or DB fails
+      site = {
+        name: "PrimeNest Realty",
+        bot_display_name: "Estate Assistant",
+        welcome_message: "Hi! Welcome to our agency. How can I help you today?",
+        fallback_message: "I'm having a bit of trouble accessing specific data, but I can still answer general questions or take your details!"
+      };
     }
 
     const kbContext = kb && kb.length > 0 
@@ -169,61 +197,65 @@ export async function POST(req: NextRequest) {
     const responseText = result.response.text();
     const output = JSON.parse(responseText);
 
-    // 4. Persistence: Update Leads & Conversation
-    let leadId = null;
+    // 4. Persistence: Update Leads & Conversation (Wrap in its own try/catch)
+    try {
+      let leadId = null;
 
-    // Check if we have an existing conversation for this visitor/site
-    const { data: existingConv } = await supabase
-      .from('conversations')
-      .select('id, lead_id')
-      .eq('visitor_id', visitorId)
-      .eq('site_id', siteId)
-      .single();
+      // Check if we have an existing conversation for this visitor/site
+      const { data: existingConv } = await supabase
+        .from('conversations')
+        .select('id, lead_id')
+        .eq('visitor_id', visitorId)
+        .eq('site_id', siteId)
+        .maybeSingle();
 
-    leadId = existingConv?.lead_id;
+      leadId = existingConv?.lead_id;
 
-    // If there's new lead data, upsert it
-    const hasLeadData = output.updatedLeadData && Object.values(output.updatedLeadData).some(v => v !== null && v !== undefined && v !== '');
-    
-    if (hasLeadData) {
-      const { data: newLead, error: leadErr } = await supabase
-        .from('leads')
-        .upsert({
-          id: leadId,
-          site_id: siteId,
-          full_name: output.updatedLeadData.name,
-          phone: output.updatedLeadData.phone,
-          email: output.updatedLeadData.email,
-          interest_type: output.updatedLeadData.interest?.toLowerCase(), // lowercase: buy, rent, invest
-          property_type: output.updatedLeadData.propertyType,
-          location: output.updatedLeadData.location,
-          budget: output.updatedLeadData.budget,
-          viewing_request: output.updatedLeadData.viewingRequest,
-          status: output.isLeadComplete ? 'qualified' : 'new' // lowercase: new, contacted, qualified...
-        })
-        .select()
-        .single();
+      // If there's new lead data, upsert it
+      const hasLeadData = output.updatedLeadData && Object.values(output.updatedLeadData).some(v => v !== null && v !== undefined && v !== '');
       
-      if (newLead) leadId = newLead.id;
-      if (leadErr) console.error('Lead Upsert Error:', leadErr);
+      if (hasLeadData) {
+        const { data: newLead, error: leadErr } = await supabase
+          .from('leads')
+          .upsert({
+            id: leadId,
+            site_id: siteId,
+            full_name: output.updatedLeadData.name,
+            phone: output.updatedLeadData.phone,
+            email: output.updatedLeadData.email,
+            interest_type: output.updatedLeadData.interest?.toLowerCase(), 
+            property_type: output.updatedLeadData.propertyType,
+            location: output.updatedLeadData.location,
+            budget: output.updatedLeadData.budget,
+            viewing_request: output.updatedLeadData.viewingRequest,
+            status: output.isLeadComplete ? 'qualified' : 'new'
+          })
+          .select()
+          .maybeSingle();
+        
+        if (newLead) leadId = newLead.id;
+        if (leadErr) console.error('Lead Upsert Error:', leadErr);
+      }
+
+      // Update conversation transcript
+      const transcript = messages.concat([{ id: `bot-${Date.now()}`, role: 'bot', content: output.reply }]);
+      
+      const { error: convErr } = await supabase.from('conversations').upsert({
+        id: existingConv?.id,
+        site_id: siteId,
+        visitor_id: visitorId,
+        lead_id: leadId,
+        transcript,
+        last_message: output.reply,
+        lead_captured: output.isLeadComplete,
+        current_stage: output.isLeadComplete ? 'completed' : 'chat',
+        capture_state: output.updatedLeadData || {}
+      });
+
+      if (convErr) console.error('Conversation Upsert Error:', convErr);
+    } catch (persistError) {
+      console.error('Persistence failed, but returning AI response:', persistError);
     }
-
-    // Update conversation transcript
-    const transcript = messages.concat([{ id: `bot-${Date.now()}`, role: 'bot', content: output.reply }]);
-    
-    const { error: convErr } = await supabase.from('conversations').upsert({
-      id: existingConv?.id,
-      site_id: siteId,
-      visitor_id: visitorId,
-      lead_id: leadId,
-      transcript,
-      last_message: output.reply,
-      lead_captured: output.isLeadComplete,
-      current_stage: output.isLeadComplete ? 'completed' : 'chat',
-      capture_state: output.updatedLeadData || {}
-    });
-
-    if (convErr) console.error('Conversation Upsert Error:', convErr);
 
     return NextResponse.json(output);
 
